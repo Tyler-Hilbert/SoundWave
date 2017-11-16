@@ -46,16 +46,16 @@ function build(handles, input)
 
     elseif strcmp(input,'square') == 1
         set(handles.on1,'value',0); 
-        set(handles.on2,'value',0); 
-        set(handles.on3,'value',0); 
-        set(handles.on4,'value',0); 
-        set(handles.on5,'value',0); 
+        set(handles.on2,'value','off'); 
+        set(handles.on3,'value','off'); 
+        set(handles.on4,'value','off'); 
+        set(handles.on5,'value','off'); 
         baseFreq = 120;
         sum = GenerateSound(baseFreq,1,fs, duration);
         for i = 3:2:251
             newSound = GenerateSound(baseFreq*i,1/i,fs, duration);
-            plot (values(1:displayRange), newSound(1:displayRange));
             hold on;
+            plot (values(1:displayRange), newSound(1:displayRange));
             sum = sum + newSound;
         end
         hold off;
