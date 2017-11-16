@@ -29,12 +29,12 @@ function build(handles, input)
     displayRange = 100;
 
     axes(handles.Individual);
-    if strcmp(input,'user-input') == 1
-        s1 = GenerateSound(getFreq(handles.freq1),getAmplitude(handles.Amp1, handles.on1),fs,duration); %GenerateSound(baseFreq,1, fs, duration);
-        s2 = GenerateSound(getFreq(handles.freq2),getAmplitude(handles.Amp2, handles.on2),fs,duration);%GenerateSound(baseFreq*3,1/3, fs, duration);
-        s3 = GenerateSound(getFreq(handles.freq3),getAmplitude(handles.Amp3, handles.on3),fs,duration);%GenerateSound(baseFreq*5,1/5, fs, duration);
-        s4 = GenerateSound(getFreq(handles.freq4),getAmplitude(handles.Amp4, handles.on4),fs,duration);%GenerateSound(baseFreq*7,1/7, fs, duration);
-        s5 = GenerateSound(getFreq(handles.freq5),getAmplitude(handles.Amp5, handles.on5),fs,duration);%GenerateSound(baseFreq*9,1/9, fs, duration);
+    if strcmp(input,'user-input') == 1 % Generate based upon user input
+        s1 = GenerateSound(getFreq(handles.freq1),getAmplitude(handles.Amp1, handles.on1),fs,duration); 
+        s2 = GenerateSound(getFreq(handles.freq2),getAmplitude(handles.Amp2, handles.on2),fs,duration);
+        s3 = GenerateSound(getFreq(handles.freq3),getAmplitude(handles.Amp3, handles.on3),fs,duration);
+        s4 = GenerateSound(getFreq(handles.freq4),getAmplitude(handles.Amp4, handles.on4),fs,duration);
+        s5 = GenerateSound(getFreq(handles.freq5),getAmplitude(handles.Amp5, handles.on5),fs,duration);
         sum = s1+s2+s3+s4+s5;
 
         dr1=getDisplayRange(s1,displayRange);
@@ -43,31 +43,36 @@ function build(handles, input)
         dr4=getDisplayRange(s4,displayRange);
         dr5=getDisplayRange(s5,displayRange);
         plot (values(1:dr1), s1(1:dr1), values(1:dr2), s2(1:dr2), values(1:dr3), s3(1:dr3), values(1:dr4), s4(1:dr4),values(1:dr5), s5(1:dr5));
-    elseif strcmp(input,'square') == 1
+    elseif strcmp(input,'square') == 1 % Generate from square wave button press
         toggleAllOff(handles);
+        baseFreq = 500;
         
-        baseFreq = 120;
-        sum = GenerateSound(baseFreq,1,fs, duration);
-        for i = 3:2:251
+        for i = 1:2:251
             newSound = GenerateSound(baseFreq*i,1/i,fs, duration);
             plot (values(1:displayRange), newSound(1:displayRange));
             hold on;
-            sum = sum + newSound;
+            if i ~= 1
+                sum = sum + newSound;
+            else 
+                sum = newSound;
+            end
         end
         hold off;
-    else
+    else % Generate from triangle wave press
         toggleAllOff(handles);
         
-        baseFreq = 120;
+        baseFreq = 500;
         volumeBoost = 2; % Amount to multiply amplitude by to increase volume
-        amp = volumeBoost*((-1)^((1-1)/2))/1^2;
-        sum = GenerateSound(baseFreq,amp,fs, duration);
-        for i = 3:2:251
+        for i = 1:2:251
             amp = volumeBoost*((-1)^((i-1)/2))/i^2;
             newSound = GenerateSound(baseFreq*i,amp,fs, duration);
             plot (values(1:displayRange), newSound(1:displayRange));
             hold on;
-            sum = sum + newSound;
+            if i ~= 1
+                sum = sum + newSound;
+            else
+                sum = newSound;
+            end
         end
         hold off;
     end
@@ -156,6 +161,14 @@ function addFreqToPopup(popup)
     current_entries{end+1} = '4500';
     set(popup, 'String', current_entries);
 
+function addAmplitudeToPopup(popup)
+    current_entries = cellstr(get(popup, 'String'));
+    for i = 3:2:9
+        amp = strcat(num2str((-1)^((i-1)/2)), '/', num2str(i^2));
+        current_entries{end+1} = amp;
+    end
+    set(popup, 'String', current_entries);
+    
 function toggleAllOff(handles)
     set(handles.on1,'value',0); 
     set(handles.on2,'value',0); 
@@ -179,6 +192,11 @@ addFreqToPopup(handles.freq2);
 addFreqToPopup(handles.freq3);
 addFreqToPopup(handles.freq4);
 addFreqToPopup(handles.freq5);
+addAmplitudeToPopup(handles.Amp1);
+addAmplitudeToPopup(handles.Amp2);
+addAmplitudeToPopup(handles.Amp3);
+addAmplitudeToPopup(handles.Amp4);
+addAmplitudeToPopup(handles.Amp5);
 
 axes(handles.Logo);
 imshow('Logo.PNG');
