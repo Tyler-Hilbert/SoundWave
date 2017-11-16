@@ -43,13 +43,9 @@ function build(handles, input)
         dr4=getDisplayRange(s4,displayRange);
         dr5=getDisplayRange(s5,displayRange);
         plot (values(1:dr1), s1(1:dr1), values(1:dr2), s2(1:dr2), values(1:dr3), s3(1:dr3), values(1:dr4), s4(1:dr4),values(1:dr5), s5(1:dr5));
-
     elseif strcmp(input,'square') == 1
-        set(handles.on1,'value',0); 
-        set(handles.on2,'value',0); 
-        set(handles.on3,'value',0); 
-        set(handles.on4,'value',0); 
-        set(handles.on5,'value',0); 
+        toggleAllOff(handles);
+        
         baseFreq = 120;
         sum = GenerateSound(baseFreq,1,fs, duration);
         for i = 3:2:251
@@ -60,37 +56,62 @@ function build(handles, input)
         end
         hold off;
     else
-    end
-
-global player;
-player = audioplayer(sum, fs);
-player.pause();
-player.play();
-
-
-axes(handles.Combined);
-plot (values(1:displayRange), sum(1:displayRange));
-
-axes(handles.Moving);
-maxValue = max(sum);
-minValue = min(sum);
-if maxValue ~= 0 && minValue ~= 0
-    maxOutput = maxValue + abs(maxValue/3);
-    minOutput = minValue - abs(minValue/3);
-    tic
-    initialTime = toc;
-    for i = 1:500:fs*duration
-        while initialTime+i/fs > toc
-            pause(.001);
+        toggleAllOff(handles);
+        
+        baseFreq = 120;
+        volumeBoost = 2; % Amount to multiply amplitude by to increase volume
+        amp = volumeBoost*((-1)^((1-1)/2))/1^2;
+        sum = GenerateSound(baseFreq,amp,fs, duration);
+        for i = 3:2:251
+            amp = volumeBoost*((-1)^((i-1)/2))/i^2;
+            newSound = GenerateSound(baseFreq*i,amp,fs, duration);
+            plot (values(1:displayRange), newSound(1:displayRange));
+            hold on;
+            sum = sum + newSound;
         end
-        plot(values(i:i+500), sum(i:i+500));
-        axis([i/fs (i+500)/fs minOutput maxOutput]);
+        hold off;
     end
-end
+    title('Individual sine waves');
+    ylabel('Amplitude(nm)');
+    xlabel('Time(s)');
+
+    global player;
+    player = audioplayer(sum, fs);
+    player.pause();
+    player.play();
+
+
+    axes(handles.Combined);
+    plot (values(1:displayRange), sum(1:displayRange));
+    title('Sum of sine waves');
+    ylabel('Amplitude(nm)');
+    xlabel('Time(s)');
+
+    
+    axes(handles.Moving);
+    maxValue = max(sum);
+    minValue = min(sum);
+    if maxValue ~= 0 && minValue ~= 0
+        maxOutput = maxValue + abs(maxValue/3);
+        minOutput = minValue - abs(minValue/3);
+        tic
+        initialTime = toc;
+        for i = 1:500:fs*duration
+            while initialTime+i/fs > toc
+                pause(.001);
+            end
+            plot(values(i:i+500), sum(i:i+500));
+            axis([i/fs (i+500)/fs minOutput maxOutput]);
+            title('Sum of sine waves in real time');
+            ylabel('Amplitude(nm)');
+            xlabel('Time(s)');
+        end
+    end
+
 
 function [a] = GenerateSound( freq, amp, fs, duration)
     values=0:1/fs:duration;
-    a=amp*sin(2*pi* freq*values);
+    a=amp*sin(2*pi*freq*values);
 
 function [freq] = getFreq(popup)
     switch get(popup,'Value')
@@ -135,6 +156,13 @@ function addFreqToPopup(popup)
     current_entries{end+1} = '4500';
     set(popup, 'String', current_entries);
 
+function toggleAllOff(handles)
+    set(handles.on1,'value',0); 
+    set(handles.on2,'value',0); 
+    set(handles.on3,'value',0); 
+    set(handles.on4,'value',0); 
+    set(handles.on5,'value',0); 
+    
 function [dr] = getDisplayRange(s, displayRange)
     if max(s) == 0
         dr = 1;

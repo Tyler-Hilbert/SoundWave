@@ -45,21 +45,29 @@ function build(handles, input)
         plot (values(1:dr1), s1(1:dr1), values(1:dr2), s2(1:dr2), values(1:dr3), s3(1:dr3), values(1:dr4), s4(1:dr4),values(1:dr5), s5(1:dr5));
 
     elseif strcmp(input,'square') == 1
-        set(handles.on1,'value',0); 
-        set(handles.on2,'value','off'); 
-        set(handles.on3,'value','off'); 
-        set(handles.on4,'value','off'); 
-        set(handles.on5,'value','off'); 
+        toggleAllOff();
+        
         baseFreq = 120;
-        sum = GenerateSound(baseFreq,1,fs, duration);
+        sum = GenerateSound(baseFreq,((-1)^((n-1)/2))/n^2,fs, duration);
         for i = 3:2:251
             newSound = GenerateSound(baseFreq*i,1/i,fs, duration);
-            hold on;
             plot (values(1:displayRange), newSound(1:displayRange));
+            hold on;
             sum = sum + newSound;
         end
         hold off;
     else
+        toggleAllOff();
+        
+        baseFreq = 120;
+        sum = GenerateSound(baseFreq,1,fs, duration);
+        for i = 3:2:251
+            newSound = GenerateSound(baseFreq*i,1/i,fs, duration);
+            plot (values(1:displayRange), newSound(1:displayRange));
+            hold on;
+            sum = sum + newSound;
+        end
+        hold off;
     end
 
 global player;
@@ -90,7 +98,7 @@ end
 
 function [a] = GenerateSound( freq, amp, fs, duration)
     values=0:1/fs:duration;
-    a=amp*sin(2*pi* freq*values);
+    a=amp*sin(2*pi*freq*values);
 
 function [freq] = getFreq(popup)
     switch get(popup,'Value')
@@ -135,6 +143,13 @@ function addFreqToPopup(popup)
     current_entries{end+1} = '4500';
     set(popup, 'String', current_entries);
 
+function toggleAllOff(handles)
+    set(handles.on1,'value',0); 
+    set(handles.on2,'value',0); 
+    set(handles.on3,'value',0); 
+    set(handles.on4,'value',0); 
+    set(handles.on5,'value',0); 
+    
 function [dr] = getDisplayRange(s, displayRange)
     if max(s) == 0
         dr = 1;
