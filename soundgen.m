@@ -58,13 +58,29 @@ function build(handles, input)
             end
         end
         hold off;
-    else % Generate from triangle wave press
+    elseif strcmp(input,'triangle') == 1 % Generate from triangle wave press
         toggleAllOff(handles);
         
         baseFreq = 500;
         volumeBoost = 2; % Amount to multiply amplitude by to increase volume
         for i = 1:2:251
             amp = volumeBoost*((-1)^((i-1)/2))/i^2;
+            newSound = GenerateSound(baseFreq*i,amp,fs, duration);
+            plot (values(1:displayRange), newSound(1:displayRange));
+            hold on;
+            if i ~= 1
+                sum = sum + newSound;
+            else
+                sum = newSound;
+            end
+        end
+        hold off;
+    else % Sawtooth
+        toggleAllOff(handles);
+        
+        baseFreq = 500;
+        for i = 1:125;
+            amp = 1/i;
             newSound = GenerateSound(baseFreq*i,amp,fs, duration);
             plot (values(1:displayRange), newSound(1:displayRange));
             hold on;
@@ -422,3 +438,8 @@ function pushbutton2_Callback(hObject, eventdata, handles)
 % --- Executes on button press in triangle.
 function triangle_Callback(hObject, eventdata, handles)
     build(handles, 'triangle');
+
+
+% --- Executes on button press in sawtooth.
+function sawtooth_Callback(hObject, eventdata, handles)
+    build(handles, 'sawtooth');
