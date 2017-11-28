@@ -92,6 +92,7 @@ function build(handles, input)
         end
         hold off;
     end
+    
     title('Individual sine waves');
     ylabel('Amplitude(nm)');
     xlabel('Time(s)');
