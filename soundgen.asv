@@ -94,7 +94,6 @@ function build(handles, input)
         hold off;
     else
         toggleAllOff(handles);
-        sum = rebuildSound(displayRange, duration)
     end
     
     title('Individual sine waves');
@@ -139,10 +138,10 @@ function [a] = GenerateSound( freq, amp, fs, duration)
     values=0:1/fs:duration;
     a=amp*sin(2*pi*freq*values);
 
-function [sum] = rebuildSound(displayRange, t)
+function [sum] = rebuildSound()
     % Generate signal
     fs = 44100;   % sample frequency (Hz)
-    values=0:1/fs:t;
+    t = duration;
 
     x = audioread('sound.mp3');
 
@@ -162,7 +161,7 @@ function [sum] = rebuildSound(displayRange, t)
     % Find freq
     frequencies(1) = 0;
     amplitudes(1) = 0;
-    cutoff = .001;%mean(amp) - abs(mean(amp))/4;
+    cutoff = mean(amp) - abs(mean(amp))/4;
     for i = 1:length(amp)
         if amp(i) > cutoff
             frequencies(length(frequencies)+1) = f(i);
@@ -173,16 +172,13 @@ function [sum] = rebuildSound(displayRange, t)
     % Generate signal
     for i = 2:length(frequencies)
       newSound = GenerateSound(frequencies(i),amplitudes(i),fs, t);
-      plot (values(1:displayRange), newSound(1:displayRange));
-      hold on;
+      
       if i ~= 2
         sum = sum + newSound;
       else
         sum = newSound;
       end
     end
-    hold off;
-    sum = sum * 6; % Make sound louder
 
 function [freq] = getFreq(popup)
     switch get(popup,'Value')
@@ -497,4 +493,6 @@ function sawtooth_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in Sound.
 function Sound_Callback(hObject, eventdata, handles)
-    build(handles, 'sound');
+% hObject    handle to Sound (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)

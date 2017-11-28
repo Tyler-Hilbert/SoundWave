@@ -2,25 +2,19 @@
 clear all;
 
 % Generate signal
-fs = 41000;                                % sample frequency (Hz)
+fs = 44100;                                % sample frequency (Hz)
 t = 10;
-freq1 = 500;
-freq2 =700;
 
-x = audioread('gong.mp3');%GenerateSound(freq1,1,fs,t) + GenerateSound(freq2,1,fs,t); 
-% hplayer = audioplayer(x, fs);
-% play(hplayer);
+x = audioread('sound.mp3');
 
 % Perform fft and get values
 y = fft(x);
-
-
 n = length(x);          % number of samples
+amp = abs(y)/n;    % amplitude of the DFT
+amp = amp(1:fs/2);
 f = (0:n-1)*(fs/n);     % frequency range
 f = f(1:fs/2);
 
-amp = abs(y)/n;    % amplitude of the DFT
-amp = amp(1:fs/2);
 
 plot(f,amp)
 xlabel('Frequency')
@@ -30,7 +24,7 @@ ylabel('amplitude')
 % Find freq
 frequencies(1) = 0;
 amplitudes(1) = 0;
-cutoff = mean(amp) - abs(mean(amp))/3;
+cutoff = mean(amp) - abs(mean(amp))/4;
 for i = 1:length(amp)
     if amp(i) > cutoff
         frequencies(length(frequencies)+1) = f(i);
