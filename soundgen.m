@@ -94,7 +94,7 @@ function build(handles, input)
         hold off;
     else
         toggleAllOff(handles);
-        sum = rebuildSound(displayRange, duration)
+        sum = rebuildSound(displayRange, duration);
     end
     
     title('Individual sine waves');
