@@ -182,7 +182,7 @@ function [sum] = rebuildSound(displayRange, t)
       end
     end
     hold off;
-    sum = sum * 6; % Make sound louder
+    sum = sum * 10; % Make sound louder
 
 function [freq] = getFreq(popup)
     switch get(popup,'Value')
