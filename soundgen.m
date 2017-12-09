@@ -98,7 +98,7 @@ function build(handles, input)
     end
     
     title('Individual sine waves');
-    ylabel('Amplitude(nm)');
+    ylabel('Amplitude');
     xlabel('Time(s)');
 
     global player;
@@ -110,7 +110,7 @@ function build(handles, input)
     axes(handles.Combined);
     plot (values(1:displayRange), sum(1:displayRange));
     title('Sum of sine waves');
-    ylabel('Amplitude(nm)');
+    ylabel('Amplitude');
     xlabel('Time(s)');
 
     
@@ -129,7 +129,7 @@ function build(handles, input)
             plot(values(i:i+500), sum(i:i+500));
             axis([i/fs (i+500)/fs minOutput maxOutput]);
             title('Sum of sine waves in real time');
-            ylabel('Amplitude(nm)');
+            ylabel('Amplitude');
             xlabel('Time(s)');
         end
     end
