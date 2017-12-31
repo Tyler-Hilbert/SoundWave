@@ -19,7 +19,7 @@ full = full(crop:end);
 % Perform fft and get frequencies
 chunks = 3200;         % How many chunks to break wave into
 for i = 1:chunks
-    if i > 20
+    if i > fs/2
         break;
     end
     beginningChunk = (i-1)*fs/chunks+1;
@@ -32,8 +32,10 @@ for i = 1:chunks
     f = (0:n-1)*(fs/n);     % frequency range
     f = f(1:end/2);
 
-    figure(i);
+    pause(.0001);
+    figure(1);
     plot(f,amp)
+    axis([0 20000 0 .05]);
     xlabel('Frequency')
     ylabel('amplitude')
 end
