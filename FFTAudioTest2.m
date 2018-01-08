@@ -13,13 +13,12 @@ for i = 1:fs
         break
     end
 end
-
 full = full(crop:end);
 
 % Perform fft and get frequencies
-chunks = 3200;         % How many chunks to break wave into
+chunks = 16;         % How many chunks to break wave into
 for i = 1:chunks
-    if i > fs/2
+    if i > 40
         break;
     end
     beginningChunk = (i-1)*fs/chunks+1;
@@ -32,15 +31,15 @@ for i = 1:chunks
     f = (0:n-1)*(fs/n);     % frequency range
     f = f(1:end/2);
 
-    pause(.0001);
+    pause(1);
     figure(1);
     plot(f,amp)
-    axis([0 20000 0 .05]);
+    axis([0 20000 0 .02]);
     xlabel('Frequency')
     ylabel('amplitude')
 end
 
-test = full((1-1)*fs/chunks+1:10*1*fs/chunks);
+test = full((1-1)*fs/chunks+1:1*fs/chunks);
 hplayer = audioplayer(test, fs);
 play(hplayer);
 
