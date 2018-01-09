@@ -1,0 +1,51 @@
+clear all;
+
+% Read Audio
+fs = 44100;         % sample frequency (Hz)
+full = audioread('O.mp3');
+
+% Remove leading 0's and select range
+for i = 1:fs
+    if full(i) ~= 0
+        crop = i;
+        break
+    end
+end
+full = full(crop:end);
+
+startTime = 0;
+endTime = length(full)/fs;
+
+% Play song
+tic
+player = audioplayer(full(fs*startTime+1:fs*endTime), fs);
+player.play();
+initialTime = toc;
+
+% Perform fft and get frequencies (hopefully in realish time with audio)
+windowSize = fs/8;
+for i = windowSize/2+1+fs*startTime : fs/16 : fs*endTime
+    beginningChunk = round(i-windowSize/2);
+    endChunk = round(i+windowSize/2);
+    
+    x = full(beginningChunk:endChunk);
+    y = fft(x);
+    n = length(x);          % number of samples in chunk
+    power = abs(y).^2/n;    % power of the DFT
+    power = power(1:end/2);
+    f = (0:n-1)*(fs/n);     % frequency range
+    f = f(1:power(round(end/2)));
+    while initialTime+i/fs > toc
+        pause(.0001);
+    end
+    figure(1);
+    plot(f,power);
+    axis([0 10000 0 5]);
+    xlabel('Frequency');
+    ylabel('Power');
+end
+
+% test = full((1-1)*fs/chunks+1:1*fs/chunks);
+% hplayer = audioplayer(test, fs);
+% play(hplayer);
+
