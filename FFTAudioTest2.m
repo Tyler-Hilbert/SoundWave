@@ -4,7 +4,7 @@ warning('off','MATLAB:colon:nonIntegerIndex'); % Suppress integer operand errors
 
 % Read Audio
 fs = 44100;             % sample frequency (Hz)
-full = audioread('O.mp3');
+full = audioread('song.wav');
 
 % Remove leading 0's and select range
 for i = 1:fs
@@ -32,13 +32,12 @@ max(1) = 0;
 for i = 2:numBins
     max(i) = 0;
 end
-
 for i = fs*startTime+1+windowSize : windowSize/4 : fs*endTime-windowSize
     beginningChunk = round(i-windowSize);
     endChunk = round(i+windowSize);
     x = full(beginningChunk:endChunk);
     y = fft(x, numBins);
-    power = abs(y).^2;
+    power = abs(y).^2; % Note the display doesn't calculate the power only the amplitude
     f = linspace(0,1,numBins);
     for i = 1:numBins
         if max(i) < power(i)
@@ -56,15 +55,12 @@ for i = fs*startTime+1+windowSize : windowSize/4 : fs*endTime-windowSize
     % Calculate power for each frequency
     x = full(beginningChunk:endChunk);
     y = fft(x, numBins);
-    %n = length(x);          % number of samples in chunk
-    power = abs(y).^2;%/n;    % power of the DFT
-    %power = power(1:end/2); % Single sided spectrum
+    amp = abs(y);
     f = linspace(0,1,numBins);
-    %f = (0:n-1)*(fs/n);     % frequency range
-    %f = f(1:end/2);         % Single sided spectrum
-    
-    % Normalize
-    normalizedPower = power./max;
+
+    % Normalize (note not true normalization since normalizedAmplitude will
+    % never actually reach 1).
+    normalizedAmplitude = amp./max;
     
     % Wait for audio to catch back up
     while initialTime+i/fs > toc
@@ -72,9 +68,9 @@ for i = fs*startTime+1+windowSize : windowSize/4 : fs*endTime-windowSize
     end
     % Plot
     figure(1);
-    plot(f,normalizedPower);
+    plot(f,normalizedAmplitude);
     axis([0 1 0 1]);
     xlabel('Frequency Bin');
-    ylabel('Normalized Power');
+    ylabel('Normalized Amplitude');
 end
 
