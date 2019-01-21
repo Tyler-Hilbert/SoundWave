@@ -1,34 +1,48 @@
 function varargout = soundgen(varargin)
+    % Begin initialization code - DO NOT EDIT
+    gui_Singleton = 1;
+    gui_State = struct('gui_Name',       mfilename, ...
+                       'gui_Singleton',  gui_Singleton, ...
+                       'gui_OpeningFcn', @soundgen_OpeningFcn, ...
+                       'gui_OutputFcn',  @soundgen_OutputFcn, ...
+                       'gui_LayoutFcn',  [] , ...
+                       'gui_Callback',   []);
+    if nargin && ischar(varargin{1})
+        gui_State.gui_Callback = str2func(varargin{1});
+    end
 
-% Begin initialization code - DO NOT EDIT
-gui_Singleton = 1;
-gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @soundgen_OpeningFcn, ...
-                   'gui_OutputFcn',  @soundgen_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
-if nargin && ischar(varargin{1})
-    gui_State.gui_Callback = str2func(varargin{1});
-end
-
-if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
-else
-    gui_mainfcn(gui_State, varargin{:});
-end
-% End initialization code - DO NOT EDIT
-
+    if nargout
+        [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+    else
+        gui_mainfcn(gui_State, varargin{:});
+    end
+    % End initialization code - DO NOT EDIT
 
 
+%%%%%%%%%% Audio Code %%%%%%%%%%
+
+% Generates a wave with the given frequency, amplitude, sampling rate and
+% duration (in seconds)
+function [a] = GenerateSound( freq, amp, fs, duration)
+    values=0:1/fs:duration;
+    a=amp*sin(2*pi*freq*values);
+
+% Builds the wave from user input then plays and plots it
+% input is the wave type hardcoded in the button callback functions
 function build(handles, input)
     fs=20500;  % sampling frequency
     duration=10;
     values=0:1/fs:duration;
 
     displayRange = 100;
-
+    
+    % Graph of all individual waves
     axes(handles.Individual);
+    title('Individual sine waves');
+    ylabel('Amplitude');
+    xlabel('Time(s)');
+    
+    % Generate the wave (and add to plot)
     if strcmp(input,'user-input') == 1 % Generate based upon user input
         s1 = GenerateSound(getFreq(handles.freq1),getAmplitude(handles.Amp1, handles.on1),fs,duration); 
         s2 = GenerateSound(getFreq(handles.freq2),getAmplitude(handles.Amp2, handles.on2),fs,duration);
@@ -97,16 +111,15 @@ function build(handles, input)
         sum = rebuildSound(displayRange, duration);
     end
     
-    title('Individual sine waves');
-    ylabel('Amplitude');
-    xlabel('Time(s)');
 
+    % Play wave
     global player;
     player = audioplayer(sum, fs);
     player.pause();
     player.play();
 
-
+    
+    % Graph of the combined wave
     axes(handles.Combined);
     plot (values(1:displayRange), sum(1:displayRange));
     title('Sum of sine waves');
@@ -114,6 +127,7 @@ function build(handles, input)
     xlabel('Time(s)');
 
     
+    % "real-time" graph
     axes(handles.Moving);
     maxValue = max(sum);
     minValue = min(sum);
@@ -134,17 +148,13 @@ function build(handles, input)
         end
     end
 
-
-function [a] = GenerateSound( freq, amp, fs, duration)
-    values=0:1/fs:duration;
-    a=amp*sin(2*pi*freq*values);
-
+% Reads in a sound file and breaks it into individual waves (with a FFT),
+% then checks the result by generating all the waves and playing them
 function [sum] = rebuildSound(displayRange, t)
-    % Generate signal
     fs = 44100;   % sample frequency (Hz)
     values=0:1/fs:t;
 
-    x = audioread('sound.mp3');
+    x = audioread('song.wav');
 
     % Perform fft and get values
     y = fft(x);
@@ -153,10 +163,6 @@ function [sum] = rebuildSound(displayRange, t)
     amp = amp(1:fs/2);
     f = (0:n-1)*(fs/n);     % frequency range
     f = f(1:fs/2);
-
-%     plot(f,amp)
-%     xlabel('Frequency')
-%     ylabel('amplitude')
 
     % Turn fft back to signal
     % Find freq
@@ -184,6 +190,10 @@ function [sum] = rebuildSound(displayRange, t)
     hold off;
     sum = sum * 10; % Make sound louder
 
+   
+%%%%%%%%%% GUI methods %%%%%%%%%%
+    
+% Get frequency from drop down list
 function [freq] = getFreq(popup)
     switch get(popup,'Value')
         case 1
@@ -210,13 +220,32 @@ function [freq] = getFreq(popup)
             allItems = get(popup,'string');
             selectedIndex = get(popup,'Value');
             freq = str2num(allItems{selectedIndex});
-end
+    end
 
+% Get amplitude from drop down list
 function [amp] = getAmplitude(popup, toggle)
     get(popup,'Value');
     allItems = get(popup,'string');
     selectedIndex = get(popup,'Value');
     amp = str2num(allItems{selectedIndex}) * get(toggle,'Value');
+
+% Returns the number of elements in the matrix the individual waves plot should use
+function [dr] = getDisplayRange(s, displayRange)
+    if max(s) == 0
+        dr = 1;
+    else 
+        dr = displayRange;
+    end
+ % Turns all user input frequencies off   
+ function toggleAllOff(handles)
+    set(handles.on1,'value',0); 
+    set(handles.on2,'value',0); 
+    set(handles.on3,'value',0); 
+    set(handles.on4,'value',0); 
+    set(handles.on5,'value',0);  
+   
+    
+%%%%%%%%%% Methods to populate the GUI %%%%%%%%%%
 
 function addFreqToPopup(popup)
     current_entries = cellstr(get(popup, 'String'));
@@ -234,267 +263,264 @@ function addAmplitudeToPopup(popup)
         current_entries{end+1} = amp;
     end
     set(popup, 'String', current_entries);
-    
-function toggleAllOff(handles)
-    set(handles.on1,'value',0); 
-    set(handles.on2,'value',0); 
-    set(handles.on3,'value',0); 
-    set(handles.on4,'value',0); 
-    set(handles.on5,'value',0); 
-    
-function [dr] = getDisplayRange(s, displayRange)
-    if max(s) == 0
-        dr = 1;
-    else 
-        dr = displayRange;
-    end
+   
 % --- Executes just before soundgen is made visible.
 function soundgen_OpeningFcn(hObject, eventdata, handles, varargin)
-handles.output = hObject;
-guidata(hObject, handles);
+    handles.output = hObject;
+    guidata(hObject, handles);
 
-addFreqToPopup(handles.freq1);
-addFreqToPopup(handles.freq2);
-addFreqToPopup(handles.freq3);
-addFreqToPopup(handles.freq4);
-addFreqToPopup(handles.freq5);
-addAmplitudeToPopup(handles.Amp1);
-addAmplitudeToPopup(handles.Amp2);
-addAmplitudeToPopup(handles.Amp3);
-addAmplitudeToPopup(handles.Amp4);
-addAmplitudeToPopup(handles.Amp5);
+    addFreqToPopup(handles.freq1);
+    addFreqToPopup(handles.freq2);
+    addFreqToPopup(handles.freq3);
+    addFreqToPopup(handles.freq4);
+    addFreqToPopup(handles.freq5);
+    addAmplitudeToPopup(handles.Amp1);
+    addAmplitudeToPopup(handles.Amp2);
+    addAmplitudeToPopup(handles.Amp3);
+    addAmplitudeToPopup(handles.Amp4);
+    addAmplitudeToPopup(handles.Amp5);
 
-axes(handles.Logo);
-imshow('Logo.PNG');
-
-
-% --- Outputs from this function are returned to the command line.
-function varargout = soundgen_OutputFcn(hObject, eventdata, handles) 
-% varargout  cell array for returning output args (see VARARGOUT);
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Get default command line output from handles structure
-varargout{1} = handles.output;
+    axes(handles.Logo);
+    imshow('Logo.PNG');
 
 
-% --- Executes on button press in on1.
-function on1_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
 
 
-% --- Executes on selection change in freq1.
-function freq1_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-
-% --- Executes during object creation, after setting all properties.
-function freq1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to freq1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on selection change in freq2.
-function freq2_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-% --- Executes during object creation, after setting all properties.
-function freq2_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to freq2 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on selection change in freq3.
-function freq3_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-% --- Executes during object creation, after setting all properties.
-function freq3_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to freq3 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on selection change in freq4.
-function freq4_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-% --- Executes during object creation, after setting all properties.
-function freq4_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to freq4 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on selection change in Amp1.
-function Amp1_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-
-% --- Executes during object creation, after setting all properties.
-function Amp1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to Amp1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on selection change in Amp2.
-function Amp2_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-% --- Executes during object creation, after setting all properties.
-function Amp2_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to Amp2 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on selection change in Amp3.
-function Amp3_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-% --- Executes during object creation, after setting all properties.
-function Amp3_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to Amp3 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on selection change in Amp4.
-function Amp4_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-% --- Executes during object creation, after setting all properties.
-function Amp4_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to Amp4 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on button press in on2.
-function on2_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-% --- Executes on button press in on3.
-function on3_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-% --- Executes on button press in on4.
-function on4_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-% --- Executes on selection change in freq5.
-function freq5_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-% --- Executes during object creation, after setting all properties.
-function freq5_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to freq5 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on selection change in Amp5.
-function Amp5_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
-% --- Executes during object creation, after setting all properties.
-function Amp5_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to Amp5 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on button press in on5.
-function on5_Callback(hObject, eventdata, handles)
-build(handles, 'user-input');
-
+%%%%%%%%%% GUI callback methods %%%%%%%%%%
 
 % --- Executes on button press in square.
 function square_Callback(hObject, eventdata, handles)
     build(handles, 'square');
 
-
-% --- Executes on button press in pushbutton2.
-function pushbutton2_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton2 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
 % --- Executes on button press in triangle.
 function triangle_Callback(hObject, eventdata, handles)
     build(handles, 'triangle');
-
 
 % --- Executes on button press in sawtooth.
 function sawtooth_Callback(hObject, eventdata, handles)
     build(handles, 'sawtooth');
 
-
 % --- Executes on button press in Sound.
 function Sound_Callback(hObject, eventdata, handles)
     build(handles, 'sound');
+    
+% --- Executes on button press in on1.
+function on1_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+% --- Executes on selection change in freq1.
+function freq1_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+
+% --- Executes during object creation, after setting all properties.
+function freq1_CreateFcn(hObject, eventdata, handles)
+    % hObject    handle to freq1 (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    empty - handles not created until after all CreateFcns called
+
+    % Hint: popupmenu controls usually have a white background on Windows.
+    %       See ISPC and COMPUTER.
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+
+% --- Executes on selection change in freq2.
+function freq2_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+% --- Executes during object creation, after setting all properties.
+function freq2_CreateFcn(hObject, eventdata, handles)
+    % hObject    handle to freq2 (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    empty - handles not created until after all CreateFcns called
+
+    % Hint: popupmenu controls usually have a white background on Windows.
+    %       See ISPC and COMPUTER.
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+
+% --- Executes on selection change in freq3.
+function freq3_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+% --- Executes during object creation, after setting all properties.
+function freq3_CreateFcn(hObject, eventdata, handles)
+    % hObject    handle to freq3 (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    empty - handles not created until after all CreateFcns called
+
+    % Hint: popupmenu controls usually have a white background on Windows.
+    %       See ISPC and COMPUTER.
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+
+% --- Executes on selection change in freq4.
+function freq4_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+% --- Executes during object creation, after setting all properties.
+function freq4_CreateFcn(hObject, eventdata, handles)
+    % hObject    handle to freq4 (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    empty - handles not created until after all CreateFcns called
+
+    % Hint: popupmenu controls usually have a white background on Windows.
+    %       See ISPC and COMPUTER.
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+
+% --- Executes on selection change in Amp1.
+function Amp1_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+
+% --- Executes during object creation, after setting all properties.
+function Amp1_CreateFcn(hObject, eventdata, handles)
+    % hObject    handle to Amp1 (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    empty - handles not created until after all CreateFcns called
+
+    % Hint: popupmenu controls usually have a white background on Windows.
+    %       See ISPC and COMPUTER.
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+
+% --- Executes on selection change in Amp2.
+function Amp2_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+% --- Executes during object creation, after setting all properties.
+function Amp2_CreateFcn(hObject, eventdata, handles)
+    % hObject    handle to Amp2 (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    empty - handles not created until after all CreateFcns called
+
+    % Hint: popupmenu controls usually have a white background on Windows.
+    %       See ISPC and COMPUTER.
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+
+% --- Executes on selection change in Amp3.
+function Amp3_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+% --- Executes during object creation, after setting all properties.
+function Amp3_CreateFcn(hObject, eventdata, handles)
+    % hObject    handle to Amp3 (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    empty - handles not created until after all CreateFcns called
+
+    % Hint: popupmenu controls usually have a white background on Windows.
+    %       See ISPC and COMPUTER.
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+
+% --- Executes on selection change in Amp4.
+function Amp4_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+% --- Executes during object creation, after setting all properties.
+function Amp4_CreateFcn(hObject, eventdata, handles)
+    % hObject    handle to Amp4 (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    empty - handles not created until after all CreateFcns called
+
+    % Hint: popupmenu controls usually have a white background on Windows.
+    %       See ISPC and COMPUTER.
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+
+% --- Executes on button press in on2.
+function on2_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+% --- Executes on button press in on3.
+function on3_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+% --- Executes on button press in on4.
+function on4_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+% --- Executes on selection change in freq5.
+function freq5_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+% --- Executes during object creation, after setting all properties.
+function freq5_CreateFcn(hObject, eventdata, handles)
+    % hObject    handle to freq5 (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    empty - handles not created until after all CreateFcns called
+
+    % Hint: popupmenu controls usually have a white background on Windows.
+    %       See ISPC and COMPUTER.
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+
+% --- Executes on selection change in Amp5.
+function Amp5_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+% --- Executes during object creation, after setting all properties.
+function Amp5_CreateFcn(hObject, eventdata, handles)
+    % hObject    handle to Amp5 (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    empty - handles not created until after all CreateFcns called
+
+    % Hint: popupmenu controls usually have a white background on Windows.
+    %       See ISPC and COMPUTER.
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+
+% --- Executes on button press in on5.
+function on5_Callback(hObject, eventdata, handles)
+    build(handles, 'user-input');
+
+
+
+
+% --- Executes on button press in pushbutton2.
+function pushbutton2_Callback(hObject, eventdata, handles)
+    % hObject    handle to pushbutton2 (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    
+%%%%%%%%%% Misc Functions %%%%%%%%%%
+
+% --- Outputs from this function are returned to the command line.
+function varargout = soundgen_OutputFcn(hObject, eventdata, handles) 
+    % varargout  cell array for returning output args (see VARARGOUT);
+    % hObject    handle to figure
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+
+    % Get default command line output from handles structure
+    varargout{1} = handles.output;
+    
+    
+    
+    
+    
+    
+
