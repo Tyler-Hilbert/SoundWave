@@ -22,13 +22,13 @@ function varargout = soundgen(varargin)
 %%%%%%%%%% Audio Code %%%%%%%%%%
 
 % Generates a wave with the given frequency, amplitude, sampling rate and
-% duration (in seconds)
+% duration (in seconds).
 function [a] = GenerateSound( freq, amp, fs, duration)
     values=0:1/fs:duration;
     a=amp*sin(2*pi*freq*values);
 
-% Builds the wave from user input then plays and plots it
-% input is the wave type hardcoded in the button callback functions
+% Builds the wave from user input then plays and plots.
+% "input" is the wave type hardcoded in the button callback functions.
 function build(handles, input)
     fs=20500;  % sampling frequency
     duration=10;
@@ -36,14 +36,15 @@ function build(handles, input)
 
     displayRange = 100;
     
-    % Graph of all individual waves
+    % Graph of all individual waves.
     axes(handles.Individual);
     title('Individual sine waves');
     ylabel('Amplitude');
     xlabel('Time(s)');
     
-    % Generate the wave (and add to plot)
-    if strcmp(input,'user-input') == 1 % Generate based upon user input
+    % Generate the wave (and add to plot).
+    % Generate based upon user input.
+    if strcmp(input,'user-input') == 1 
         s1 = GenerateSound(getFreq(handles.freq1),getAmplitude(handles.Amp1, handles.on1),fs,duration); 
         s2 = GenerateSound(getFreq(handles.freq2),getAmplitude(handles.Amp2, handles.on2),fs,duration);
         s3 = GenerateSound(getFreq(handles.freq3),getAmplitude(handles.Amp3, handles.on3),fs,duration);
@@ -57,7 +58,9 @@ function build(handles, input)
         dr4=getDisplayRange(s4,displayRange);
         dr5=getDisplayRange(s5,displayRange);
         plot (values(1:dr1), s1(1:dr1), values(1:dr2), s2(1:dr2), values(1:dr3), s3(1:dr3), values(1:dr4), s4(1:dr4),values(1:dr5), s5(1:dr5));
-    elseif strcmp(input,'square') == 1 % Generate from square wave button press
+    
+    % Generate from square wave button press.
+    elseif strcmp(input,'square') == 1 
         toggleAllOff(handles);
         baseFreq = 500;
         
@@ -72,7 +75,9 @@ function build(handles, input)
             end
         end
         hold off;
-    elseif strcmp(input,'triangle') == 1 % Generate from triangle wave press
+        
+    % Generate from triangle wave press.
+    elseif strcmp(input,'triangle') == 1 
         toggleAllOff(handles);
         
         baseFreq = 500;
@@ -90,7 +95,8 @@ function build(handles, input)
         end
         hold off;
         
-    elseif strcmp(input,'sawtooth') == 1 % Sawtooth
+    % Generate from sawtooth wave press.
+    elseif strcmp(input,'sawtooth') == 1
         toggleAllOff(handles);
         
         baseFreq = 500;
@@ -112,14 +118,14 @@ function build(handles, input)
     end
     
 
-    % Play wave
+    % Play wave.
     global player;
     player = audioplayer(sum, fs);
     player.pause();
     player.play();
 
     
-    % Graph of the combined wave
+    % Graph of the combined wave.
     axes(handles.Combined);
     plot (values(1:displayRange), sum(1:displayRange));
     title('Sum of sine waves');
@@ -127,7 +133,7 @@ function build(handles, input)
     xlabel('Time(s)');
 
     
-    % "real-time" graph
+    % "real-time" graph.
     axes(handles.Moving);
     maxValue = max(sum);
     minValue = min(sum);
@@ -149,26 +155,26 @@ function build(handles, input)
     end
 
 % Reads in a sound file and breaks it into individual waves (with a FFT),
-% then checks the result by generating all the waves and playing them
+% then checks the result by generating all the waves and playing them.
 function [sum] = rebuildSound(displayRange, t)
     fs = 44100;   % sample frequency (Hz)
     values=0:1/fs:t;
 
     x = audioread('song.wav');
 
-    % Perform fft and get values
+    % Perform fft and get values.
     y = fft(x);
-    n = length(x);          % number of samples
-    amp = abs(y)/n;    % amplitude of the DFT
+    n = length(x);      % number of samples
+    amp = abs(y)/n;     % amplitude of the DFT
     amp = amp(1:fs/2);
-    f = (0:n-1)*(fs/n);     % frequency range
+    f = (0:n-1)*(fs/n); % frequency range
     f = f(1:fs/2);
 
-    % Turn fft back to signal
-    % Find freq
+    % Turn fft back to signal.
+    % Find freq.
     frequencies(1) = 0;
     amplitudes(1) = 0;
-    cutoff = .001;%mean(amp) - abs(mean(amp))/4;
+    cutoff = .001;
     for i = 1:length(amp)
         if amp(i) > cutoff
             frequencies(length(frequencies)+1) = f(i);
@@ -176,7 +182,7 @@ function [sum] = rebuildSound(displayRange, t)
         end
     end
 
-    % Generate signal
+    % Generate signal.
     for i = 2:length(frequencies)
       newSound = GenerateSound(frequencies(i),amplitudes(i),fs, t);
       plot (values(1:displayRange), newSound(1:displayRange));
@@ -193,7 +199,7 @@ function [sum] = rebuildSound(displayRange, t)
    
 %%%%%%%%%% GUI methods %%%%%%%%%%
     
-% Get frequency from drop down list
+% Get frequency from drop down list.
 function [freq] = getFreq(popup)
     switch get(popup,'Value')
         case 1
@@ -222,21 +228,22 @@ function [freq] = getFreq(popup)
             freq = str2num(allItems{selectedIndex});
     end
 
-% Get amplitude from drop down list
+% Get amplitude from drop down list.
 function [amp] = getAmplitude(popup, toggle)
     get(popup,'Value');
     allItems = get(popup,'string');
     selectedIndex = get(popup,'Value');
     amp = str2num(allItems{selectedIndex}) * get(toggle,'Value');
 
-% Returns the number of elements in the matrix the individual waves plot should use
+% Get the number of elements in the matrix the individual waves plot should use.
 function [dr] = getDisplayRange(s, displayRange)
     if max(s) == 0
         dr = 1;
     else 
         dr = displayRange;
     end
- % Turns all user input frequencies off   
+    
+ % Turns all user input frequencies off  . 
  function toggleAllOff(handles)
     set(handles.on1,'value',0); 
     set(handles.on2,'value',0); 
@@ -282,11 +289,9 @@ function soundgen_OpeningFcn(hObject, eventdata, handles, varargin)
 
     axes(handles.Logo);
     imshow('Logo.PNG');
+    
 
-
-
-
-%%%%%%%%%% GUI callback methods %%%%%%%%%%
+%%%%%%%%%% GUI Callback Methods (and other generated GUI methods) %%%%%%%%%%
 
 % --- Executes on button press in square.
 function square_Callback(hObject, eventdata, handles)
@@ -517,10 +522,3 @@ function varargout = soundgen_OutputFcn(hObject, eventdata, handles)
 
     % Get default command line output from handles structure
     varargout{1} = handles.output;
-    
-    
-    
-    
-    
-    
-
